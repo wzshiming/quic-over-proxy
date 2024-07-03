@@ -1,0 +1,79 @@
+version: "3"
+services:
+  proxy:
+    image: alpine
+    volumes:
+      - ./bin/proxy:/proxy
+    entrypoint: /proxy
+    environment:
+      ADDRESS: 0.0.0.0:1080
+    networks:
+      server-proxy:
+        ipv4_address: 172.200.0.11
+      client-proxy:
+        ipv4_address: 172.100.0.11
+
+  server:
+    image: alpine
+    volumes:
+      - ./bin/server:/server
+    entrypoint: /server
+    environment:
+      QUIC_GO_DISABLE_RECEIVE_BUFFER_WARNING: 'true'
+      ADDRESS: "0.0.0.0:8080"
+    networks:
+      server-proxy:
+        ipv4_address: 172.200.0.10
+
+  client:
+    image: alpine
+    volumes:
+      - ./bin/client:/client
+    entrypoint: /client
+    environment:
+      PROXY: "172.100.0.11:1080"
+      TARGET: "172.200.0.10:8080"
+    depends_on:
+      - proxy
+      - server
+    networks:
+      - client-proxy
+
+  server-as-client:
+    image: alpine
+    volumes:
+      - ./bin/server-as-client:/server-as-client
+    entrypoint: /server-as-client
+    environment:
+      QUIC_GO_DISABLE_RECEIVE_BUFFER_WARNING: 'true'
+      ADDRESS: "0.0.0.0:8080"
+    networks:
+      server-proxy:
+        ipv4_address: 172.200.0.20
+  client-as-server:
+    image: alpine
+    volumes:
+      - ./bin/client-as-server:/client-as-server
+    entrypoint: /client-as-server
+    environment:
+      PROXY: "172.100.0.11:1080"
+      TARGET: "172.200.0.20:8080"
+    depends_on:
+      - proxy
+      - server-as-client
+    networks:
+      - client-proxy
+
+networks:
+  client-proxy:
+    driver: bridge
+    ipam:
+      config:
+      - subnet: 172.100.0.0/24
+        gateway: 172.100.0.1
+  server-proxy:
+    driver: bridge
+    ipam:
+      config:
+      - subnet: 172.200.0.0/24
+        gateway: 172.200.0.1
