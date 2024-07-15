@@ -4,7 +4,7 @@ go 1.22.4
 
 require (
 	github.com/quic-go/quic-go v0.45.1
-	github.com/wzshiming/socks5 v0.4.3
+	github.com/wzshiming/socks5 v0.5.1
 )
 
 require (

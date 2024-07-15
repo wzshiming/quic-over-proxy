@@ -3,6 +3,7 @@ package quic_over_proxy
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"net"
 
 	"github.com/quic-go/quic-go"
@@ -40,12 +41,17 @@ func (q *dialer) DialContext(ctx context.Context, network, address string) (net.
 		return nil, err
 	}
 
+	pc, ok := proxyConn.(packetConnWithSetBuffer)
+	if !ok {
+		return nil, errors.New("proxyConn does not implement packetConnWithSetBuffer")
+	}
+
 	remoteAddr, err := net.ResolveUDPAddr(network, address)
 	if err != nil {
 		return nil, err
 	}
 
-	conn, err := quic.Dial(ctx, &packetConnWrapper{proxyConn.(net.PacketConn)}, remoteAddr, q.tlsCfg, q.cfg)
+	conn, err := quic.Dial(ctx, pc, remoteAddr, q.tlsCfg, q.cfg)
 	if err != nil {
 		return nil, err
 	}

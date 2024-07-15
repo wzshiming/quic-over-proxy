@@ -4,31 +4,12 @@ import (
 	"net"
 
 	"github.com/quic-go/quic-go"
-	"github.com/wzshiming/socks5"
 )
 
-type packetConnWrapper struct {
+type packetConnWithSetBuffer interface {
 	net.PacketConn
-}
-
-func (c *packetConnWrapper) SetReadBuffer(bytes int) error {
-	// TODO: remove depend wzshiming/socks5
-	socks5udpConn, ok := c.PacketConn.(*socks5.UDPConn)
-	if ok {
-		udpConn := socks5udpConn.PacketConn.(*net.UDPConn)
-		return udpConn.SetReadBuffer(bytes)
-	}
-	return nil
-}
-
-func (c *packetConnWrapper) SetWriteBuffer(bytes int) error {
-	// TODO: remove depend wzshiming/socks5
-	socks5udpConn, ok := c.PacketConn.(*socks5.UDPConn)
-	if ok {
-		udpConn := socks5udpConn.PacketConn.(*net.UDPConn)
-		return udpConn.SetWriteBuffer(bytes)
-	}
-	return nil
+	SetReadBuffer(bytes int) error
+	SetWriteBuffer(bytes int) error
 }
 
 type streamWrapper struct {
